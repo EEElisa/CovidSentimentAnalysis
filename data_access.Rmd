@@ -5,4 +5,65 @@ author: "Group 8 - Mingqian Zheng, Yuyao Liu"
 output: html_notebook
 ---
 
-## Setup
+```{r}
+if(!require(rtweet)) install.packages('rtweet')
+if(!require(tidyverse)) install.packages('tidyverse')
+if(!require(tidytext)) install.packages('tidytext')
+if(!require(ggmap)) install.packages('ggmap')
+if(!require(rjson)) install.packages('rjson')
+
+library(rtweet)
+library(tidyverse)
+library(tidytext)
+library(ggmap)
+library(rjson)
+```
+
+
+
+```{r}
+tokyo_geo = "35.709,139.732,2mi"
+ny_geo = "40.713,-74.006,1mi"
+us_geo = "37.090,-95.713,2mi"
+```
+
+```{r}
+keyword = "Covid OR COVID-19 OR cornavirus OR pandemic OR covid19 OR omicron"
+```
+
+
+```{r}
+auth_setup_default()
+
+us_tweets <- search_tweets(keyword, geocode=us_geo, lang="en", n=100)
+us_tweets
+
+ny_tweets <- search_tweets(keyword, geocode=ny_geo, lang="en", n=100)
+ny_tweets
+
+```
+
+```{r}
+jsonData <- toJSON(ny_tweets)
+if (!file.exists("ny.json")){
+  write(jsonData, "ny.json")
+}
+```
+
+
+
+```{r}
+aa_geocode="42.282,-83.748,2mi"
+covid_tweets_aa <- search_tweets(keyword, geocode=aa_geocode, lang="en", n=100)
+covid_tweets_aa
+```
+
+
+
+
+
+```{r}
+dim(covid_tweets_aa)
+covid_tweets_aa$full_text
+```
+
