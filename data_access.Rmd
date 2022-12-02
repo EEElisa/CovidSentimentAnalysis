@@ -1,0 +1,8 @@
+---
+title: "Sentiment Analysis during the Covid"
+subtitle: "727 Final Project"
+author: "Group 8 - Mingqian Zheng, Yuyao Liu"
+output: html_notebook
+---
+
+## Setup
