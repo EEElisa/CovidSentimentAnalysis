@@ -35,8 +35,8 @@ keyword = "Covid OR COVID-19 OR cornavirus OR pandemic OR covid19 OR omicron"
 ```{r}
 auth_setup_default()
 
-us_tweets <- search_tweets(keyword, geocode=us_geo, lang="en", n=100)
-us_tweets
+# us_tweets <- search_tweets(keyword, geocode=us_geo, lang="en", n=100)
+# us_tweets
 
 ny_tweets <- search_tweets(keyword, geocode=ny_geo, lang="en", n=100)
 ny_tweets
