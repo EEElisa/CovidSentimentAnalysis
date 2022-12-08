@@ -1,0 +1,418 @@
+---
+title: "Sentiment Analysis during the Covid"
+subtitle: "727 Final Project"
+author: "Group 8 - Mingqian Zheng, Yuyao Liu"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+---
+
+
+```{r}
+if(!require(rtweet)) install.packages('rtweet')
+if(!require(tidyverse)) install.packages('tidyverse')
+if(!require(dplyr)) install.packages('dplyr')
+if(!require(tidytext)) install.packages('tidytext')
+if(!require(ggmap)) install.packages('ggmap')
+if(!require(rjson)) install.packages('rjson')
+if(!require(maps)) install.packages('maps')
+if(!require(gridExtra)) install.packages('gridExtra')
+if(!require(textshape)) install.packages('textshape')
+if(!require(syuzhet)) install.packages('syuzhet')
+```
+
+```{r}
+
+library(rtweet)
+library(tidyverse)
+library(dplyr)
+library(tidytext)
+library(ggmap)
+library(rjson)
+library(maps)
+library(gridExtra)
+library(syuzhet)
+```
+
+
+
+
+
+
+```{r}
+if(!require(gtrendsR)) install.packages('gtrendsR')
+library(gtrendsR)
+
+searchtime = "2022-11-20 2022-12-08"
+
+worldwide_trend <- gtrends(c("World Cup"), time = searchtime, low_search_volume = TRUE)
+
+us_worldcup <- gtrends(c("World Cup"), geo = "US", time = searchtime, low_search_volume = TRUE)
+str(us_worldcup)
+str(worldwide_trend)
+```
+
+```{r}
+library(datasets)
+data(countries)
+summary(countries)
+countries_info <- data.frame(countries)
+countries_info
+
+str(state.x77)
+state_name <- dimnames(state.x77)[[1]]
+state_name
+
+state_info <- as_tibble(state.x77)
+state_info$name <- state_name
+state_info$abb <- state.abb
+state_info
+```
+
+
+```{r}
+# if(!require(usdata)) install.packages('usdata')
+# library(usdata)
+# 
+# data(county)
+# unique(county$state)
+# 
+# county <- county %>% 
+#   group_by(state) %>%
+  
+```
+
+
+
+
+```{r}
+if(!require(usa)) install.packages('usa')
+library(usa)
+
+facts # population data is for 2019 
+facts <- facts %>%
+  select(name, population)
+facts
+```
+
+
+
+```{r}
+if(!require(scales)) install.packages('scales')
+library(scales)
+
+us_regions_hit <- us_worldcup$interest_by_region %>%
+  rename(state=location, hits=hits)
+us_regions_hit <- us_regions_hit %>%
+  inner_join(facts, by=c('state'='name')) 
+us_regions_hit
+us_pop <- sum(us_regions_hit$population)
+us_pop
+
+
+## add pop weight 
+## The search volume is on a 100-point-scale.
+us_regions_hit <- us_regions_hit %>%
+  mutate(pop_w = population/us_pop) %>%
+  mutate(hits_w = hits * pop_w) %>%
+  select(state, hits_w, hits) %>%
+  arrange(desc(hits_w)) %>%
+  mutate(hits_rescale = as.integer(rescale(hits_w, to=c(0,100))))
+
+us_regions_hit
+```
+
+
+# plot the us heat map 
+
+```{r}
+# plot a us map using values of search volumn 
+
+if(!require(usmap)) install.packages('usmap')
+library(usmap)
+
+plot_usmap(data = us_regions_hit, values = "hits_rescale", color = "#56042C") + 
+  scale_fill_continuous(low="white", high="#56042C", name = "Search Volumn", label = scales::comma) + 
+  labs(title="Google trends of 'World Cup from 2022-11-20 to 2022-12-08'") +
+  theme(legend.position = "right")
+```
+
+
+
+
+```{r}
+world_country_hit <- worldwide_trend$interest_by_country
+world_country_hit
+plot(us_worldcup)
+plot(worldwide_trend)
+
+world_country_hit <- world_country_hit %>%
+  select(location, hits) %>%
+  rename(region=location, hits=hits)
+```
+
+
+# draw the world map 
+```{r}
+# world_map <- map_data("world")
+# worldcup_map <- left_join(world_country_hit, world_map, by="region")
+# 
+# ggplot() +
+#   geom_map(
+#     data=worldcup_map, map=worldcup_map, 
+#     aes(x=long, y=lat, map_id=region, fill=hits),
+#     color="white", fill="#7f7f7f"
+#   ) +
+#   geom_map(data = world_country_hit,
+#            map = worldcup_map,
+#            aes(fill = as.numeric(hits), map_id = region),
+#            color="#ffffff", size=0.15) +
+#   scale_fill_continuous(low = 'white', high = 'red') +
+#   theme(axis.ticks = element_blank(),
+#         axis.text = element_blank(),
+#         axis.title = element_blank())
+```
+
+
+
+```{r}
+# us_regions_hit <- us_regions_hit %>%
+#   select(state, hits) %>%
+#   arrange(desc(hits)) 
+```
+
+
+
+```{r}
+top_10_regions <- us_regions_hit[1:10,]
+top_10_regions
+```
+
+
+# ```{r}
+# group_H <- c("Ghana", "Uruguay")
+# team_hit <- gtrends(group_H, geo = "US", time = searchtime, low_search_volume = TRUE)
+# ```
+
+```{r}
+# plot(team_hit)
+```
+
+# stream tweets 
+
+```{r}
+# library(rtweet)
+# usa <- lookup_coords("usa")
+# 
+# stream_tweets(
+#   c(-124.84897,24.39631,-66.88544,49.38436),
+#   timeout = 10,
+#   file_name = "usa.json",
+#   n = 1000,
+#   parse = FALSE
+# )
+```
+
+
+
+```{r}
+auth_setup_default()
+# keywords_tweets <- "WorldCup OR worldcup -filter:retweets -filter:replies"
+
+keywords_tweets <- "WorldCup OR worldcup"
+
+(usa <- lookup_coords("usa"))
+
+japan <- lookup_coords("japan")
+japan
+
+# worldwide <- search_tweets(keywords_tweets, geocode=usa, since='2022-11-20', until='2022-12-04', lang="en", n=1000)
+
+
+japan <- search_tweets(keywords_tweets, geocode=japan, n=1000)
+japan
+
+worldwide <- search_tweets(keywords_tweets, lang="en",n=1000)
+
+worldwide
+```
+
+```{r}
+extract_tag <- function(Tweets){
+  tag_pattern <- "#[[:alpha:]]+"
+  tag_idx <- grep(x = Tweets, pattern = tag_pattern)
+  tag_matches <- gregexpr(pattern = tag_pattern,
+                          text = Tweets[tag_idx])
+  extracted_tag <- regmatches(x = Tweets[tag_idx], m = tag_matches)
+  
+  Data <- data.frame(table(tolower(unlist(extracted_tag))))
+  colnames(Data) <- c("tag","freq")
+  Data <- Data %>% arrange(desc(freq))
+  return(Data)
+}
+```
+
+
+```{r}
+tags <- extract_tag(worldwide$full_text)
+tags
+tags %>%
+  top_n(10) %>%
+  mutate(tag = reorder(tag, freq)) %>%
+  ggplot() +
+  geom_col(aes(x = tag, y = freq, fill = tag)) +
+  coord_flip()
+```
+
+## emoji analysis 
+
+
+
+
+
+
+```{r}
+# Topic Modeling 
+
+# add 'doc_id' to each tweet 
+worldwide_tweets <- worldwide$full_text
+worldwide_tweets <- as_tibble(worldwide_tweets)
+worldwide_tweets$doc_id <- 1:nrow(worldwide_tweets)
+
+# create a corpus
+corpus_worldwide_orig <- corpus(worldwide_tweets,
+                           docid_field = "doc_id",
+                           text_field = "value")
+
+# Tokenization
+corpus_worldwide_proc <- tokens(corpus_worldwide_orig,
+                                remove_punct = TRUE,
+                                remove_numbers = TRUE,
+                                remove_symbols = TRUE) %>% tokens_tolower()
+
+# Lemmatization #
+lemmaData <- read.csv2("baseform_en.tsv", 
+                       sep="\t", 
+                       header=FALSE, 
+                       encoding = "UTF-8", 
+                       stringsAsFactors = F)
+
+lemmaData<-lemmaData %>%
+  filter(is.na(V1) == FALSE)
+
+corpus_worldwide_proc <-  tokens_replace(corpus_worldwide_proc, 
+                                    lemmaData$V1, 
+                                    lemmaData$V2,
+                                    valuetype = "fixed") 
+
+eng_stop <- stopwords("english")
+key_stop <- tolower(keywords_tweets) %>% str_split(" ")
+key_stop <- unlist(key_stop)
+key_stop <- append(key_stop, "or")
+worldcup_stop <- c("worldcup", "world", "cup")
+stopwords <- append(eng_stop, key_stop)
+stopwords <- append(stopwords, worldcup_stop)
+
+
+stopwords <- c(stopwords("english"), "rt")
+
+
+corpus_worldwide_proc <- corpus_worldwide_proc %>%
+                             tokens_remove(stopwords) %>%
+                             tokens_ngrams(1) 
+
+str(corpus_worldwide_proc)
+```
+
+
+## Word Cloud 
+
+```{r}
+# corpus_worldwide <- unlist(corpus_worldwide_proc)
+# 
+# corpus_worldwide <- as_tibble(corpus_worldwide)
+# 
+# corpus_worldwide <- corpus_worldwide %>%
+#   group_by(value) %>%
+#   summarise(freq=n()) %>%
+#   arrange(desc(freq))
+```
+
+
+```{r}
+# if(!require(quanteda)) install.packages("quanteda")
+# if(!require(topicmodels)) install.packages("topicmodels")
+# 
+# library(quanteda)
+# library(topicmodels)
+```
+
+
+```{r}
+# wcloud <- wordcloud2(corpus_worldwide,  
+#                      size = 1.5,
+#                      color= 'random-dark', 
+#                      shape = 'pentagon',
+#                      rotateRatio = 0) 
+# wcloud
+```
+
+
+## Sentiment Analysis
+
+
+
+```{r}
+# install.packages("textdata")
+library(tidytext)
+library(dplyr)
+library(ggplot2)
+library(textdata)
+corpus_worldwide_proc <- as_tibble(unlist(corpus_worldwide_proc))
+## need to cite "NRC Word-Emotion Assotiation Lexican"
+get_sentiments("nrc")
+corpus_worldwide_proc
+senti = inner_join(corpus_worldwide_proc, get_sentiments("nrc"),by=c("value"="word")) %>%
+  count(sentiment)
+senti$percent = (senti$n/sum(senti$n))*100
+senti$percent
+```
+
+```{r}
+subtitle = paste(Sys.time(),"keywords:",keywords_tweets)
+ggplot(senti, aes(sentiment, percent)) +   
+        geom_bar(aes(fill = sentiment), position = 'dodge', stat = 'identity')+ 
+        ggtitle("Sentiment analysis based on lexicon: 'NRC'", subtitle=subtitle)+
+  coord_flip() +
+        theme(legend.position = 'none', plot.title = element_text(size=18, face = 'bold'),
+              axis.text=element_text(size=16),
+              axis.title=element_text(size=14,face="bold"))
+```
+
+```{r}
+worldwide_tweets <- as.character(worldwide_tweets)
+s <- get_nrc_sentiment(worldwide_tweets, language = "english", lowercase = TRUE)
+head(s)
+```
+
+```{r}
+Sys.time()
+```
+
+
+# ```{r}
+# barplot(colSums(s),
+#         las = 2,
+#         col = rainbow(10),
+#         ylab = 'Count',
+#         main = 'Sentiment Scores Tweets')
+# ```
+
+
+
+
+
+
+
