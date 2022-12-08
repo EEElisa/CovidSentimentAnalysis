@@ -193,6 +193,10 @@ extract_tag <- function(Tweets){
 }
 ```
 
+<<<<<<< HEAD
+=======
+covid
+>>>>>>> 3315068953393d15c331a5ce07b0a1f67d523ceb
 
 ```{r}
 tags <- extract_tag(worldwide$full_text)
