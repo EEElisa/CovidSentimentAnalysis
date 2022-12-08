@@ -11,34 +11,22 @@ output:
 
 
 ```{r}
-if(!require(rtweet)) install.packages('rtweet')
 if(!require(tidyverse)) install.packages('tidyverse')
 if(!require(dplyr)) install.packages('dplyr')
 if(!require(tidytext)) install.packages('tidytext')
 if(!require(ggmap)) install.packages('ggmap')
 if(!require(rjson)) install.packages('rjson')
 if(!require(maps)) install.packages('maps')
-if(!require(gridExtra)) install.packages('gridExtra')
-if(!require(textshape)) install.packages('textshape')
-if(!require(syuzhet)) install.packages('syuzhet')
 ```
 
 ```{r}
-
-library(rtweet)
 library(tidyverse)
 library(dplyr)
 library(tidytext)
 library(ggmap)
 library(rjson)
 library(maps)
-library(gridExtra)
-library(syuzhet)
 ```
-
-
-
-
 
 
 ```{r}
@@ -48,11 +36,23 @@ library(gtrendsR)
 searchtime = "2022-11-20 2022-12-08"
 
 worldwide_trend <- gtrends(c("World Cup"), time = searchtime, low_search_volume = TRUE)
-
 us_worldcup <- gtrends(c("World Cup"), geo = "US", time = searchtime, low_search_volume = TRUE)
-str(us_worldcup)
-str(worldwide_trend)
+
+# str(us_worldcup)
+# str(worldwide_trend)
 ```
+
+```{r}
+world_country_hit <- worldwide_trend$interest_by_country
+world_country_hit
+plot(us_worldcup)
+plot(worldwide_trend)
+
+# world_country_hit <- world_country_hit %>%
+#   select(location, hits) %>%
+#   rename(region=location, hits=hits)
+```
+
 
 ```{r}
 library(datasets)
@@ -70,20 +70,6 @@ state_info$name <- state_name
 state_info$abb <- state.abb
 state_info
 ```
-
-
-```{r}
-# if(!require(usdata)) install.packages('usdata')
-# library(usdata)
-# 
-# data(county)
-# unique(county$state)
-# 
-# county <- county %>% 
-#   group_by(state) %>%
-  
-```
-
 
 
 
@@ -141,28 +127,7 @@ plot_usmap(data = us_regions_hit, values = "hits_rescale", color = "#56042C") +
 
 
 
-
-```{r}
-world_country_hit <- worldwide_trend$interest_by_country
-world_country_hit
-plot(us_worldcup)
-plot(worldwide_trend)
-
-world_country_hit <- world_country_hit %>%
-  select(location, hits) %>%
-  rename(region=location, hits=hits)
-```
-
-
 ```{r}
 top_10_regions <- us_regions_hit[1:10,]
 top_10_regions
 ```
-
-
-
-
-
-
-
-
