@@ -4,45 +4,86 @@ subtitle: "SURVMETH 727 Term Paper"
 author: "Group 8 - Yuyao Liu, Mingqian Zheng"
 date: "`r Sys.Date()`"
 output:
+  html_document:
+    toc: yes
+    df_print: paged
   pdf_document:
     toc: yes
     df_print: kable
+references:
+- id: rodrigues2021
+  title: Real-time Twitter trend analysis using big data analytics and machine learning techniques
+  author:
+  - family: Rodrigues
+    given: Anisha P
+  - family: Fernandes
+    given: Roshan
+  - family: Bhandary
+    given: Adarsh
+  - family: Shenoy
+    given: Asha C
+  - family: Shetty
+    given: Ashwanth
+  - family: Anisha
+    given: M 
+  container-title: Wireless Communications and Mobile Computing
+  volume: 2021
+  type: article-journal
+  issued:
+    year: 2021
 ---
 
-```{r}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE, autodep=TRUE,
+                      cache.comments=FALSE,
+                      message=FALSE, warning=FALSE,
+                      fig.width=4.5, fig.height=3)
+```
+
+```{r, include=FALSE}
 getwd()
 ```
 
 
 ```{r, include = FALSE}
 library(knitr)
+if(!require(tidyverse)) install.packages('tidyverse')
 library(tidyverse)
+if(!require(tidytext)) install.packages('tidytext')
 library(tidytext)
+if(!require(rtweet)) install.packages('rtweet')
 library(rtweet)
+if(!require(gtrendsR)) install.packages('gtrendsR')
 library(gtrendsR)
+if(!require(ggplot2)) install.packages('ggplot2')
 library(ggplot2)
+if(!require(stringr)) install.packages('stringr')
+library(stringr)
+if(!require(cowplot)) install.packages('cowplot')
+library(cowplot)
+if(!require(magick)) install.packages('magick')
+library(magick)
+if(!require(stringr)) install.packages('stringr')
 library(stringr)
 ```
 
 ## Introduction
 
-Nowadays, we are stepping into an era of information explosion. Social media received much more attention than traditional media because it creates a convenient environment for people from different places to share information and make connections. Twitter is one of the most popular social media platforms with 237.8 million monetizable daily active users. Every second, there are countless posts on Twitter expressing opinions and emotions about a variety of topics. Twitter is featured by using hashtags, a combination of a # symbol and index keywords, to help its users easily find and follow the topics they are interested in. Another distinguished feature of Twitter is Twitter Trends, which detects the most popular always-changing trending topics in different countries. Twitter also provides an opportunity for users to retrieve tweets through Twitter API without opening the application. It involves counting methods and various machine learning algorithms to identify trending topics on Twitter through extracting targeted key words.  
+Nowadays, we are stepping into an era of information explosion. Social media received much more attention than traditional media because it creates a convenient environment for people from different places to share information and make connections. Twitter is one of the most popular social media platforms with 237.8 million monetizable daily active users. Every second, there are countless posts on Twitter expressing opinions and emotions about a variety of topics. Twitter is featured by using hashtags, a combination of a # symbol and index keywords, to help its users easily find and follow the topics they are interested in. Another distinguished feature of Twitter is Twitter Trends, which detects the most popular always-changing trending topics in different countries. Twitter also provides an opportunity for users to retrieve tweets through Twitter API without opening the application. It involves counting methods and various machine learning algorithms to identify trending topics on Twitter through extracting targeted key words [@rodrigues2021].  
 
 The biggest search engine Google also provides a free tool, Google Trends, for analyzing the popularity of  Google search terms using real-time data. Similar to Twitter API, Google Trends allows users to capture what people are searching in different periods of time, season, and location. The main purpose of Google Trends is providing users with key insights about the volume of Google searches related to specific search terms, as well as showing the relative popularity of these search queries based on geographical locations.  
 
-Twitter API and Google Trends enable us to easily extract the specific information and get deeper into the topics we care about. When we started thinking about what topic we are going to analyze in this project, we noticed that despite the regular explore tabs “News”, “Sports”, and “Entertainment”, there is a new tab “World Cup” at the top of the Twitter homepage because of the ongoing 2022 Qatar World Cup, which is the most viewed and followed sporting event in the world and now dominating online discussions, especially in Twitter. Elon Musk revealed that Twitter traffic related to the 2022 Qatar World Cup almost hit 20,000 tweets per second. It aroused our interest to analyze the sentiment related to the topic “World Cup” and how people from worldwide or a specific region respond to it. When users click the tab “World Cup”, they can see several featured Tweets and accounts as they scroll down the page. However, unlike other tabs, there’s no trending hashtags or topics available. Thus, we tracked Tweets before and after each quarter-final match both around the world and within the U.S.. By comparing the trends in the two areas, we can see how people in different areas react differently to the World Cup. 
+Twitter API and Google Trends enable us to easily extract the specific information and get deeper into the topics we care about. When we started thinking about what topic we are going to analyze in this project, we noticed that despite the regular explore tabs “News”, “Sports”, and “Entertainment”, there is a new tab “World Cup” at the top of the Twitter homepage because of the ongoing 2022 Qatar World Cup, which is the most viewed and followed sporting event in the world and now dominating online discussions, especially in Twitter. Elon Musk revealed that Twitter traffic related to the 2022 Qatar World Cup almost hit 20,000 tweets per second. It aroused our interest to analyze the sentiment related to the topic “World Cup” and how people from worldwide or a specific region respond to it. When users click the tab “World Cup”, they can see several featured Tweets and accounts as they scroll down the page. However, unlike other tabs, there’s no trending hashtags or topics available. Thus, we tracked Tweets before and after each quarter-final match both around the world and within the U.S.. By comparing the trends in the two areas, we can see how people in different areas react differently to the World Cup. The link to this project's github repo is https://github.com/EEElisa/WorldCupAnalysis.git.
 
 ## Data
 
-<!-- This section describes the data sources and the data gathering process. -->
-
-In this project, the data sources are \texttt{Twitter} and \texttt{Google Trends}.
+In this project, the data sources are Twitter and Google Trends. As for Twitter, we gathered and cached Tweets at several time points during the quarter-finals of the World Cup (especially before and after each match) with search scope restricted to the U.S. and the whole world. As for Google Trends, we accessed the search volumes of "World Cup" with the same two search scopes, U.S. and the world. 
 
 ### Data Gathering
 
 #### Google Trends of World Cup 
 
-To get an overall trend of the World Cup, we use \texttt{gtrendsR} package to access the search volumes of the query "World Cup" from the very beginning of the game season to the end of the quarter-finals, i.e., 2022-11-20 to 2022-12-10, in both the worldwide scope and the United States. 
+To get an overall trend of the World Cup, we use "gtrendsR" package to access the search volumes of the query "World Cup" from the very beginning of the game season to the end of the quarter-finals, i.e., 2022-11-20 to 2022-12-10, in both the worldwide scope and the United States. 
 
 ```{r}
 searchtime = "2022-11-20 2022-12-10"
@@ -54,13 +95,13 @@ world_country_hit <- worldwide_trend$interest_by_country
 us_regions_hit <- us_worldcup$interest_by_region 
 ```
 
-The function "\texttt{gtrends}" returns the search volumes in an 100-point scale over time. The results for the worldwide scope include the search volumes for each country. When we restrict the areas to be the U.S., the results can tell us the search volumes for each state. So we extract the table "\texttt{interest_by_country}" and "\texttt{interest_by_region}" from the two outputs respectively. 
+The function "gtrends" returns the search volumes in an 100-point scale over time. The results for the worldwide scope include the search volumes for each country. When we restrict the areas to be the U.S., the results can tell us the search volumes for each state. So we extract the table "interest_by_country" and "interest_by_region" from the two outputs respectively. 
 
 #### Caching Tweets 
 
-The main data source is the \texttt{Tweets} gathered throughout the game season until the end of Quarter-Finals on 2022-12-10. We use the function "\texttt{search_tweets}" from \texttt{rtweet} to cache Tweets before and after each Quarter-Final game using the search query "WorldCup OR worldcup" and save the results into local csv files with the search time in the file name.
+The main data source is the Tweets gathered throughout the game season until the end of Quarter-Finals on 2022-12-10. We use the function "search_tweets" from rtweet to cache Tweets before and after each Quarter-Final game using the search query "WorldCup OR worldcup" and save the results into local csv files with the search time in the file name.
 
-By running the following chunk, users will cache 1000 recent Tweets containing the search query "WorldCup OR worldcup" into a local csv file in the current folder.
+By running the following chunk, users will cache 1000 recent Tweets containing the search query "WorldCup OR worldcup" into a local csv file in the folder named "cache".The file name includes the search time for convenience of future analysis. 
 
 ```{r}
 cache_path <- paste(getwd(),"/cache/",sep="")
@@ -94,7 +135,7 @@ write.table(world_tweets, path_world, row.names=TRUE)
 
 We read all the previously cached files into one single data frame for further analysis. 
 
-```{r}
+```{r, include=FALSE}
 base_path <- "./cache/"
 
 us_files <- c("US-2022-12-09 11:32:33.csv",
@@ -146,7 +187,7 @@ n_world <- length(world_tweets_total)
 
 We use line chart to visualize the search trends of "World Cup" around the world and within the U.S. to get an overview of the popularity. 
 
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 library("grid")
 library("gridExtra")
 
@@ -161,9 +202,9 @@ grid.arrange(plot_us, plot_world, nrow=2)
 
 The line charts show that the popularity achieved a peak on Nov. 29 when there were heated matches between Ecuador and Senegal, Netherlands and Qatar, Iran and USA, Wales and England. In the end of Group Stage on Dec. 2 and the last day of Round of 16 on Dec. 6, the popularity also increased. 
 
-We want to compare the popularity of World Cup among different states of the U.S. via a heat map. What we have so far is the search volumes in each state in an 100-point scale. But one thing to note is that the function \texttt{gtrends} doesn't take population into consideration. Thus, we need to re-scale the search volumes according to the varying size of population. 
+We want to compare the popularity of World Cup among different states of the U.S. via a heat map. What we have so far is the search volumes in each state in an 100-point scale. But one thing to note is that the function "gtrends" doesn't take population into consideration. Thus, we need to re-scale the search volumes according to the varying size of population. 
 
-The package \texttt{usa} includes the population estimates on September 26, 2019. We 
+The package "usa" includes the population estimates on September 26, 2019. 
 
 ```{r}
 if(!require(usa)) install.packages('usa')
@@ -173,8 +214,6 @@ library(usa)
 facts <- facts %>%
   select(name, population) %>%
   arrange(desc(population))
-
-facts
 ```
 
 ```{r}
@@ -182,47 +221,44 @@ if(!require(scales)) install.packages('scales')
 library(scales)
 
 us_regions_hit <- us_worldcup$interest_by_region %>%
-  rename(state=location, hits=hits)
-us_regions_hit <- us_regions_hit %>%
+  rename(state=location, hits=hits) %>%
   inner_join(facts, by=c('state'='name')) 
-us_regions_hit
+
+# us_regions_hit %>% select("state", "hits","population")
 ```
 
-```{r}
+```{r, echo=FALSE}
 us_pop <- sum(us_regions_hit$population)
-us_pop
 ```
 
-By summing up all the population, we got the total population of the U.S in 2019, which is 327167434. Then, we introduced a population weight factor $w_{pop} = pop_{state}/pop_{us}$ and multiply the column \texttt{hits}, i.e., the search volume, with the corresponding population weight $w_{pop}$. For convenience of comparison, we rescaled the search volume to 100-point.  
+By summing up all the population, we got the total population of the U.S in 2019, which is 327167434. Then, we introduced a population weight factor $w_{pop} = pop_{state}/pop_{us}$ and multiply the column "hits", i.e., the search volume, with the corresponding population weight $w_{pop}$. For convenience of comparison, we rescaled the search volume to 100-point.  
 
-```{r}
-## add pop weight 
+```{r, echo=FALSE}
 ## The search volume is on a 100-point-scale.
 us_regions_hit <- us_regions_hit %>%
   mutate(pop_w = population/us_pop) %>%
   mutate(hits_w = hits * pop_w) %>%
   select(state, hits_w, hits) %>%
   arrange(desc(hits_w)) %>%
-  mutate(hits_rescale = as.integer(rescale(hits_w, to=c(0,100)))) %>%
-  arrange(desc(hits_rescale))
+  mutate(hits_rescale = as.integer(scales:::rescale(hits_w, to=c(0,100))))
 
 us_regions_hit
 ```
 
 We visualized the search volumes among the U.S by a heat map where the darker red color means higher popularity in that area.   
 
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 if(!require(usmap)) install.packages('usmap')
 library(usmap)
 
 plot_usmap(data = us_regions_hit, values = "hits_rescale", color = "#56042C") + 
   scale_fill_continuous(low="white", high="#56042C", name = "Search Volumn", label = scales::comma) + 
-  labs(title="Google trends of 'World Cup from 2022-11-20 to 2022-12-08'") +
+  labs(title="Google trends of 'World Cup from 2022-11-20 to 2022-12-10'") +
   theme(legend.position = "right")
 ```
 
 Furthermore, we extracted the top 10 regions where the World Cup was the most popular. 
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 top_10_regions <- us_regions_hit[1:10,] 
 ggplot(data=top_10_regions, aes(x=reorder(state, hits_rescale), y=hits_rescale, fill=state)) + 
   geom_bar(stat="identity") + coord_flip() +
@@ -233,11 +269,9 @@ ggplot(data=top_10_regions, aes(x=reorder(state, hits_rescale), y=hits_rescale, 
 
 #### Extract the trending hashtags 
 
-We are interested the trending hashtags during the period of quarter-finals, i.e., 2022-12-9 to 2022-12-10. We used the combined data frames of Tweets for U.S. and the world respectively as data sources for the analysis. As the variables of interest are only the hashtag and the number of occurrences for each, no pre-processing of the texts are required. When the data frame of Tweets is passed into the function "\texttt{extract_tag}", it will return a table with attributes "\texttt{tag}" and "\texttt{freq}". Thus, we entered \texttt{us_tweets_total} and \texttt{world_tweets_total} to get the top 10 trending hashtags with the most popularity in U.S. and the world respectively. In the result, we exclude the hashtag "#worldcup" because it's the search query. 
+We are interested the trending hashtags during the period of quarter-finals, i.e., 2022-12-9 to 2022-12-10. We used the combined data frames of Tweets for U.S. and the world respectively as data sources for the analysis. As the variables of interest are only the hashtag and the number of occurrences for each, no pre-processing of the texts are required. When the data frame of Tweets is passed into the function "extract_tag", it will return a table with attributes "tag" and "freq". Thus, we entered "us_tweets_total" and "world_tweets_total" to get the top 10 trending hashtags with the most popularity in U.S. and the world respectively. In the result, we exclude the hashtag "#worldcup" because it's the search query. 
 
 ```{r}
-library(stringr)
-
 extract_tag <- function(Tweets){
   tag_pattern <- "#[[:alpha:]]+"
   tag_idx <- grep(x = Tweets, pattern = tag_pattern)
@@ -250,7 +284,9 @@ extract_tag <- function(Tweets){
   Data <- Data %>% arrange(desc(freq))
   return(Data)
 }
+```
 
+```{r, echo=FALSE, fig.align='center'}
 world_hashtags <- extract_tag(world_tweets_total$value)
 world_hashtags <- world_hashtags[-1,]
 
@@ -262,7 +298,8 @@ world_hashtags %>%
   coord_flip()
 ```
 
-```{r}
+
+```{r, echo=FALSE, fig.align='center'}
 us_hashtags <- extract_tag(us_tweets_total$value)
 us_hashtags <- us_hashtags[-1,]
 
@@ -274,47 +311,49 @@ us_hashtags %>%
   coord_flip()
 ```
 
-Considering that the sample size of U.S. and the whole world are quite different, we rescale the occurrences of each hashtag to 100-point-scale frequencies. 
+Considering that the sample size of U.S. and the whole world are quite different, we calculated the percentage of occurrences for each hashtag for comparison. 
 
-```{r}
+```{r, echo=FALSE}
 world_tag_total <- sum(world_hashtags$freq)
 us_tag_total <- sum(us_hashtags$freq)
 
 world_tag <- world_hashtags %>%
-  mutate(tag_w = freq/world_tag_total) %>%
-  mutate(freq_w = round(freq * tag_w)) %>%
-  mutate(freq_rescale = as.integer(rescale(freq_w, to=c(0,100)))) %>%
-  mutate(tag = reorder(tag, freq_rescale)) %>%
+  mutate(freq_percent = round((freq/world_tag_total)*100, digits=2)) %>%
+  mutate(tag = reorder(tag, freq_percent)) %>%
   slice_head(n = 10) %>%
-  rename(tag_world=tag, freq_world=freq_rescale) %>%
+  rename(tag_world=tag, freq_world=freq_percent) %>%
   select(tag_world, freq_world)
 
 us_tag <- us_hashtags %>%
-  mutate(tag_w = freq/us_tag_total) %>%
-  mutate(freq_w = round(freq * tag_w)) %>%
-  mutate(freq_rescale = as.integer(rescale(freq_w, to=c(0,100)))) %>%
-  mutate(tag = reorder(tag, freq_rescale)) %>%
+  mutate(freq_percent = round((freq/us_tag_total)*100, digits=2)) %>%
+  mutate(tag = reorder(tag, freq_percent)) %>%
   slice_head(n = 10) %>%
-  rename(tag_us=tag, freq_us=freq_rescale) %>%
+  rename(tag_us=tag, freq_us=freq_percent) %>%
   select(tag_us, freq_us)
 
 compare_tag <- cbind(world_tag, us_tag)
 compare_tag
 ```
 
+From the table above, we can see that the trending hashtags of are relatively lagging behind the match schedule. When Twitter users in U.S. were discussing about the match between England and France in the afternoon of Dec 10, the top two worldwide trending hashtags were still "#argentina" and "#netherlands". 
+
 #### Sentiment Analysis 
 
-```{r}
+```{r, include=FALSE}
 if(!require(tm)) install.packages("tm")
 library(tm)
 ```
 
+For sentiment analysis, we generated a courpus using the Tweeted collected before. We cleaned the corpus by removing numbers, punctuation, white space, capital letters, stop words, etc. Regarding the stop words, we included the words appearing in the search query such as "worldcup", "word", and "cup". Also, we added other words that were highly related to the World Cup itself rather than sentiments in addition to the basic English stop words given by the function "stopwords("english")". Finally, we passed the preprocessed corpus into funtion "TermDocumentMatrix" to create a term document matrix. For repeated usa, we wrote a function named "preprocess_into_tdm" to generate the term document matrix given Tweets text. 
 
-```{r}
+```{r, include=FALSE}
 eng_stop <- stopwords("english")
 key_stop <- c("worldcup", "world", "cup", "fifa", "fifaworldcup","qatar", "like", "will", "predict")
 stopwords <- append(eng_stop, key_stop)
+```
 
+
+```{r, message=FALSE, warning=FALSE}
 # function to preprocess the Tweets and transform it into words
 preprocess_into_tdm <- function(Tweets){
   tweets.corpus <- Corpus(VectorSource(Tweets)) %>%
@@ -324,16 +363,15 @@ preprocess_into_tdm <- function(Tweets){
   tm_map(content_transformer(tolower)) %>% # convert text to lowercase
   tm_map(removeWords,stopwords) %>% # remove stopwords
   tm_map(removeWords,stopwords)# remove stopwords not removed from previous line
-  
   tdm <- TermDocumentMatrix(tweets.corpus) %>% # create a term document matrix
   as.matrix()
-  
   return(tdm)
 }
 ```
 
+With the term document matrix at hand, we conducted the sentiment analysis then. In this part, we used the function "get_sentiments("nrc")" from the package "tidytext" to get a dictionary where 13,872 words were assigned a proper sentiment. We extracted unique words from the term document matrix and counted the occurrences of each word into a tibble. By conducting an inner join between the word table and the nrc sentiment table, the self-defined function "sentiment_analysis(tdm)" will return the table of emotions and their percentage. 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 # function to conduct sentiment analysis 
 sentiment_analysis <- function(tdm) {
   words <- unique(data.frame(word = names(sort(rowSums(tdm), decreasing = TRUE))))
@@ -346,7 +384,7 @@ sentiment_analysis <- function(tdm) {
 ```
 
 
-```{r, warning=FALSE}
+```{r, echo=FALSE, warning=FALSE, fig.align='center'}
 us_tweets_total <- as_tibble(us_tweets_total$value)
 tweets <- us_tweets_total %>% select("value")
 
@@ -354,74 +392,83 @@ us_tdm <- preprocess_into_tdm(tweets$value)
 us_senti_table <- sentiment_analysis(us_tdm)
 
 # plot sentiment table 
-subtitle = paste("search query:", keywords_tweets)
-
-ggplot(us_senti_table, aes(x = reorder(sentiment, percent), percent)) +   
+us_subtitle = paste("search query:", keywords_tweets)
+us_senti_plot <- ggplot(us_senti_table, aes(x = reorder(sentiment, percent), percent)) +   
         geom_bar(aes(fill = sentiment), position = 'dodge', stat = 'identity')+ 
-        ggtitle("Sentiment analysis of Tweets in U.S.", subtitle=subtitle)+
+        ggtitle("Sentiment analysis of Tweets in U.S.", subtitle=us_subtitle)+
   coord_flip() +
         theme(legend.position = 'none', plot.title = element_text(size=18, face = 'bold'),
               axis.text=element_text(size=16),
               axis.title=element_text(size=14,face="bold"))
 ```
 
-```{r, warning=FALSE}
+
+```{r, warning=FALSE, fig.height=5, fig.width=7, fig.align='center', echo=FALSE}
 # sentiment analysis for the worldwide Tweets
 world_tweets_total <- as_tibble(world_tweets_total$value)
-world_tweets <- world_tweets_total %>% select("value")
+world_tweets_total <- world_tweets_total %>% select("value")
 
-world_tdm <- preprocess_into_tdm(world_tweets$value)
+world_tdm <- preprocess_into_tdm(world_tweets_total$value)
 world_senti_table <- sentiment_analysis(world_tdm)
 
 # plot sentiment table 
-subtitle = paste("search query:", keywords_tweets)
-
-ggplot(world_senti_table, aes(x = reorder(sentiment, percent), percent)) +   
+world_subtitle = paste("search query:", keywords_tweets)
+world_senti_plot <- ggplot(world_senti_table, aes(x = reorder(sentiment, percent), percent)) +   
         geom_bar(aes(fill = sentiment), position = 'dodge', stat = 'identity')+ 
-        ggtitle("Sentiment analysis of Tweets in U.S.", subtitle=subtitle)+
+        ggtitle("Sentiment analysis of Tweets in the world", subtitle=world_subtitle)+
   coord_flip() +
         theme(legend.position = 'none', plot.title = element_text(size=18, face = 'bold'),
               axis.text=element_text(size=16),
               axis.title=element_text(size=14,face="bold"))
+
+plot_grid(us_senti_plot, world_senti_plot, ncol = 1, align="v", scale=1)
+
 ```
+
+By comparing the results of two sentiment analysis (using Tweets during the quarter-finals from U.S. and the world), we can see that the overall distribution of sentiments are similar. For instance, "positive" is at top of the rank, followed by "negative" and "trust", and "sadness", "surprise" and "disgust" are three least frequent emotions. However, there do exist several differences. The percentage of "joy" in U.S. was higher than the worldwide Tweets while the percentage of "anticipate" in U.S. was slightly lower than the world's result. The results demonstrates that the distributions of sentiments within the two days are different from each other. Moreover, the analysis can be done on an ongoing basis as the game season progresses. 
 
 #### Word Cloud of the most popular words
 
 First, we transform the Tweets that were the user gathered a moment ago into a term document matrix. 
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 worldwide_tweets <- world_tweets$full_text 
 worldwide_tweets <- as_tibble(worldwide_tweets)
+```
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 tweets <- worldwide_tweets %>% select("value")
-tdm <- preprocess_into_tdm(tweets$value)
+tweets$text <- gsub("[^[:alnum:][:blank:]?&/\\-]", "",tweets$value)
+tweets$text <- gsub("https\\S*", "",tweets$text)
+tweets$text <- gsub("amp", "",tweets$text)
 ```
 
 ```{r}
-# tweets$text <- gsub("[^[:alnum:][:blank:]?&/\\-]", "",tweets$value) 
-# tweets$text <- gsub("https\\S*", "",tweets$text) 
-# tweets$text <- gsub("amp", "",tweets$text)
+tdm <- preprocess_into_tdm(tweets$text)
 ```
 
 Then, we built a corpus using all the texts and transformed it into a term document matrix. To plot the word cloud, we calculated two attributes: word and frequency. 
 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 words <- sort(rowSums(tdm), decreasing = TRUE) # count all occurences of each word and group them
 worldwide_tweets <- data.frame(word = names(words), freq = words) # convert it to a dataframe
 head(worldwide_tweets) 
 ```
 
-In the world cloud, we didn't extract the emojis as they are straightforward indicators of emotions, which strongly motivates us to do further sentiment analysis of these Tweets. 
+In the world cloud, we didn't extract the emojis as they are straightforward indicators of emotions, which strongly motivates us to do further sentiment analysis of these Tweets. The below plot is an example generated from the Tweets that were collected when users run the rmd file. 
 
-```{r}
+```{r, include=FALSE}
+if(!require(wordcloud2)) install.packages('wordcloud2')
+if(!require(syuzhet)) install.packages('syuzhet')
+library(syuzhet)
+library(wordcloud2)
+```
+
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
 current_time <- Sys.time()
-title <- paste("WordCloud obtained at", current_time)
-
-layout(matrix(c(1, 2), nrow=2), heights=c(1, 4))
-par(mar=rep(0, 4))
-plot.new()
-text(x = 0.5, y = 0.5, title, cex = 2.0, font = 2)
 wordcloud2(worldwide_tweets,
-           size = 0.8,
+           size = 0.5,
            color= 'random-dark', 
            shape = 'pentagon',
            rotateRatio = 0) 
@@ -429,82 +476,82 @@ wordcloud2(worldwide_tweets,
 
 Following the above procedure, we visualized the Tweets collected during each quarter-final match using word cloud for both U.S. and the world. As all the plots were generated throughout the game season, we directly inserted them as follows. 
 
-```{r}
-library(png)
-if(!require(cowplot)) install.packages('cowplot')
-library(cowplot)
-if(!require(magick)) install.packages('magick')
-library(magick)
-```
 
 ##### Word clouds before the match: Brazil vs. Croatia (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/before brazil vs. croatia us trend.png", width = 0.5) + 
   draw_image("./World Cup/before barzil vs. croatia world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds after the match: Brazil vs. Croatia (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/Croatia Win us trend.png", width = 0.5) + 
   draw_image("./World Cup/Croatia Win world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds before the match: Netherlands vs. Argentina (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/Before Argentina  usatrend.png", width = 0.5) + 
   draw_image("./World Cup/before argentia world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds before the match: Netherlands vs. Argentina (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/Before Argentina  usatrend.png", width = 0.5) + 
   draw_image("./World Cup/before argentia world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds after the match: Netherlands vs. Argentina (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/agrentina win usa.png", width = 0.5) + 
   draw_image("./World Cup/argentia win world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds before the match: Morocco vs. Portugal (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/Beofre Morocco vs. Portugal us trend.png", width = 0.5) + 
   draw_image("./World Cup/Before Morocco vs. Portugal world trend.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds after the match: Morocco vs. Portugal (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/after morocco win us.png", width = 0.5) + 
   draw_image("./World Cup/after morocco win world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds before the match: England vs. France (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/before france vs. england usa.png", width = 0.5) + 
   draw_image("./World Cup/before france.england world.png", width = 0.5, x = 0.5)
 ```
 
 ##### Word clouds after the match: England vs. France (US vs. World)
-```{r}
+```{r, echo=FALSE, fig.align='center'}
 ggdraw() + 
   draw_image("./World Cup/after france win usa.png", width = 0.5) + 
   draw_image("./World Cup/france win world.png", width = 0.5, x = 0.5)
 ```
-These 16 graphs represent how people from worldwide and in the United States react to WorldCup separately through extracting the most frequently mentioned words when they mentioned WorldCup. The bigger and bolder the word appears, the more often it is selected by users. 
+
+
+These 16 graphs represent how people from worldwide and in the United States react to WorldCup separately through extracting the most frequently mentioned words when they mentioned WorldCup. The bigger the word appears, the more often it was contained in the tweets by users. 
 
 For example, in the first row, there are two graphs about the first quarter final: Brazil versus Croatia. The left graph represents how people in the United States respond to WorldCup, we can see that WorldCup mainly links to “brazil”, “croatia”, and “brazilvscroatia”. While the right graph represents worldwide trends related to WorldCup and the popular words were “argentina” and  “netherlands”. Other than comparing the searching trends between US and worldwide, through the columns of the graphs, we can see how the overall trend was changing with different matches. 
 
-## Discussion
+## Conclusion and Discussion
 
-<!-- This section summarizes the results and may briefly outline advantages and limitations of the work presented. -->
+This study aims to use Twitter API and Google Trends to extract trending words and topics with respect to the ongoing 2022 Qatar World Cup, as well as to conduct sentiment analysis. According to the above graphs, we can conclude that there is a discrepancy between US Twitter trends and worldwide trends, which can be supported by multiple perspectives. 
+
+By comparing the trending hashtags during the quarter-finals, we can see that the trending hashtags of are relatively lagging behind the match schedule while the ones of U.S. reflect a real-time update. As for the sentiment analysis, despite the overall similar pattern, there are some differences that are worth noting. The percentage of "joy" in U.S. was higher than the worldwide Tweets but the sentiment "anticipate" was slightly less popular than the world's result. The word cloud is another straightforward display of the most popular words in chosen time points. For example, after Croatia knocked Brazil out of the World Cup, the word cloud shows that the most frequent words appearing in Tweets posted by users in the United States were “brazil '' and the emoji of Croatia’s national flag. It indicates that these users followed up-to-date information and posted the tweets in real-time. By contrast, when analyzing the worldwide trend at the same time after Brazil was beaten by Croatia, we surprisingly found that the keywords related to WorldCup were not up-to-date with the ongoing of the match. Instead, the most frequent words were “win”, “earn”, “argentina”, and “netherlands”, which was more related to the earlier matches. In that case, we can conclude that Tweets in the United States followed up-to-date information about World Cup matches while Tweets in the worldwide range seemed to have a delay in information and not about the latest matches. 
+
+The limitations of this study mainly come from the data sources. Firstly, the sample size of the U.S. and the world are largely unequal. Even though we took the difference into account and used the percentage rather than absolute values for comparisons, it’s still a significant source of bias. Secondly, the cached Tweets were gathered only during the quarter-finals but the search volumes given by Google Trends indicates that the popularity of World Cup reached the peak at around the end of November. If more data were available for the analysis, the results can contain more insights. Thirdly, the study doesn’t explain the distinctions of sentiment or trending hashtags between two sets of Tweets. Further studies can examine the popular words related to each sentiment. Moreover, the analysis can be generalized to compare the sentiment and trends among different states in U.S. or different countries around the world. 
+
 
 ## References
